@@ -98,6 +98,8 @@ public class AppSettings
     public string WindowState { get; set; } = "";
     public bool AllowMultiInstance { get; set; } = false;
 
+    public ObservableCollection<string> WatchedFolders { get; set; } = [];
+
     [JsonPropertyName("RawDecoderPriority")]
     public ObservableCollection<string> RawDecoderPriorityAsStrings { get; set; } =
         [nameof(RawDecoder.WIC), nameof(RawDecoder.Rawler), nameof(RawDecoder.ImageMagick)];

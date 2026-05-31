@@ -9,6 +9,7 @@ using FlyPhotos.Core.Model;
 using FlyPhotos.Infra.Configuration;
 using FlyPhotos.Infra.Localization;
 using FlyPhotos.Services;
+using FlyPhotos.Services.Library;
 using FlyPhotos.UI.Views;
 using Microsoft.Windows.AppLifecycle;
 using NLog;
@@ -45,6 +46,9 @@ public partial class App
             AppConfig.Settings.Language = appliedLanguage;
             AppConfig.Save();
         }
+
+        if (!AppConfig.Volatile.IsSecondaryInstance)
+            LibraryIndexerService.Instance.Start();
 
         InitializeComponent();
     }

@@ -4,6 +4,7 @@ using FlyPhotos.Infra.Configuration;
 using FlyPhotos.Infra.Localization;
 using FlyPhotos.Infra.Utils;
 using FlyPhotos.Services;
+using FlyPhotos.Services.Library;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -11,6 +12,10 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Input;
 using System;
+using System.Collections.ObjectModel;
+using System.Globalization;
+using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
@@ -21,6 +26,10 @@ namespace FlyPhotos.UI.Views;
 
 public sealed partial class InitWindow
 {
+    private readonly ObservableCollection<LibrarySearchResult> _searchResults = [];
+    private Settings? _settingsWindow;
+    private int _searchVersion;
+
     public InitWindow()
     {
         InitializeComponent();
@@ -45,6 +54,12 @@ public sealed partial class InitWindow
 
         (AppWindow.Presenter as OverlappedPresenter)?.PreferredMinimumWidth = 400;
         (AppWindow.Presenter as OverlappedPresenter)?.PreferredMinimumHeight = 600;
+
+        SearchResultsListView.ItemsSource = _searchResults;
+        SearchRatingComboBox.SelectedIndex = 0;
+        LibraryIndexerService.Instance.StatusChanged += LibraryIndexerService_OnStatusChanged;
+        Loaded += InitWindow_Loaded;
+        Closed += InitWindow_Closed;
     }
 
     public string SelectedFile { get; private set; }
@@ -73,6 +88,117 @@ public sealed partial class InitWindow
             ProcessSelectedFile(file);
         else
             await ShowMessageDialog(L.Get("UnsupportedFileAlert/Title"), L.Get("UnsupportedFileAlert/Description"));
+    }
+
+    private async void InitWindow_Loaded(object sender, RoutedEventArgs e)
+    {
+        await RefreshLibraryDashboardAsync();
+        await RunSearchAsync();
+    }
+
+    private void InitWindow_Closed(object sender, WindowEventArgs args)
+    {
+        LibraryIndexerService.Instance.StatusChanged -= LibraryIndexerService_OnStatusChanged;
+        if (_settingsWindow != null)
+            _settingsWindow.Closed -= SettingsWindow_Closed;
+    }
+
+    private void LibraryIndexerService_OnStatusChanged(object? sender, EventArgs e)
+    {
+        DispatcherQueue.TryEnqueue(() => _ = RefreshLibraryDashboardAsync());
+    }
+
+    private async Task RefreshLibraryDashboardAsync()
+    {
+        var count = await LibraryCatalogService.Instance.GetIndexedAssetCountAsync();
+        var status = LibraryIndexerService.Instance.GetStatusSnapshot();
+
+        IndexedPhotoCountTextBlock.Text = count.ToString(CultureInfo.InvariantCulture);
+        IndexingStatusTextBlock.Text = status.ErrorMessage == null
+            ? status.StatusText
+            : $"{status.StatusText} ({status.ErrorMessage})";
+        WatchedFoldersTextBlock.Text = AppConfig.Settings.WatchedFolders.Count == 0
+            ? "No watched folders configured."
+            : string.Join(Environment.NewLine, AppConfig.Settings.WatchedFolders);
+    }
+
+    private async void SearchTextBox_OnTextChanged(object sender, TextChangedEventArgs e)
+    {
+        await RunSearchAsync();
+    }
+
+    private async void SearchDateTextBox_OnTextChanged(object sender, TextChangedEventArgs e)
+    {
+        await RunSearchAsync();
+    }
+
+    private async void SearchRatingComboBox_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        await RunSearchAsync();
+    }
+
+    private async Task RunSearchAsync()
+    {
+        var currentVersion = Interlocked.Increment(ref _searchVersion);
+        var parsedDate = ParseDateFilter(SearchDateTextBox.Text);
+        var minimumRating = TryGetMinimumRating();
+        var results = await LibraryCatalogService.Instance.SearchAsync(new LibrarySearchQuery(
+            SearchTextBox.Text,
+            parsedDate,
+            minimumRating));
+
+        if (currentVersion != _searchVersion)
+            return;
+
+        _searchResults.Clear();
+        foreach (var result in results)
+            _searchResults.Add(result);
+    }
+
+    private async void SearchResultsListView_OnItemClick(object sender, ItemClickEventArgs e)
+    {
+        if (e.ClickedItem is not LibrarySearchResult result)
+            return;
+
+        if (!File.Exists(result.FilePath))
+        {
+            await ShowMessageDialog("File not found", "The selected catalog entry no longer exists on disk.");
+            await RefreshLibraryDashboardAsync();
+            await RunSearchAsync();
+            return;
+        }
+
+        SelectedFile = result.FilePath;
+        Close();
+    }
+
+    private void ButtonOpenSettings_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (_settingsWindow == null)
+        {
+            _settingsWindow = new Settings();
+            _settingsWindow.SetWindowSize(900, 768);
+            _settingsWindow.CenterOnScreen();
+            _settingsWindow.Closed += SettingsWindow_Closed;
+            _settingsWindow.Activate();
+        }
+        else
+        {
+            _settingsWindow.Activate();
+        }
+    }
+
+    private void SettingsWindow_Closed(object sender, WindowEventArgs args)
+    {
+        if (_settingsWindow != null)
+            _settingsWindow.Closed -= SettingsWindow_Closed;
+
+        _settingsWindow = null;
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            _ = RefreshLibraryDashboardAsync();
+            _ = RunSearchAsync();
+        });
     }
 
 
@@ -113,5 +239,26 @@ public sealed partial class InitWindow
             XamlRoot = Content.XamlRoot
         };
         await dialog.ShowAsync();
+    }
+
+    private DateTimeOffset? ParseDateFilter(string rawText)
+    {
+        if (string.IsNullOrWhiteSpace(rawText))
+            return null;
+
+        return DateTimeOffset.TryParse(rawText, CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out var parsed)
+            ? new DateTimeOffset(parsed.Year, parsed.Month, parsed.Day, 0, 0, 0, TimeSpan.Zero)
+            : null;
+    }
+
+    private int? TryGetMinimumRating()
+    {
+        if (SearchRatingComboBox.SelectedItem is not ComboBoxItem item)
+            return null;
+
+        var tag = item.Tag?.ToString();
+        return int.TryParse(tag, NumberStyles.Integer, CultureInfo.InvariantCulture, out var rating)
+            ? rating
+            : null;
     }
 }
