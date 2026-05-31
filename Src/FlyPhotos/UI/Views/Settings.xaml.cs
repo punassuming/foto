@@ -5,6 +5,7 @@ using FlyPhotos.Infra.Configuration;
 using FlyPhotos.Infra.Localization;
 using FlyPhotos.Infra.Utils;
 using FlyPhotos.Services;
+using FlyPhotos.Services.Library;
 using FlyPhotos.Services.ExternalAppListing;
 using FlyPhotos.UI.Behaviors;
 using Microsoft.UI.Windowing;
@@ -15,6 +16,7 @@ using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using System;
+using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -23,6 +25,7 @@ using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using Windows.Storage;
+using Windows.Storage.Pickers;
 using Windows.System;
 using Microsoft.UI.Composition;
 
@@ -39,8 +42,11 @@ internal sealed partial class Settings
     public event Action<Setting>? SettingChanged;
 
     private readonly List<LanguageInfo> _supportedLanguages = [];
+    private readonly ObservableCollection<string> _watchedFolders = [];
 
     private readonly WindowAppearanceManager _windAppearanceManager;
+
+    public ObservableCollection<string> WatchedFolders => _watchedFolders;
 
     internal Settings()
     {
@@ -122,6 +128,8 @@ internal sealed partial class Settings
         ButtonEnableExternalShortcut.Toggled += ButtonEnableExternalShortcut_OnToggled;
         ButtonDecodeRawData.Toggled += ButtonDecodeRawData_OnToggled;
         AppConfig.Settings.RawDecoderPriorityAsStrings.CollectionChanged += RawDecoderPriorityAsStrings_CollectionChanged;
+        foreach (var watchedFolder in AppConfig.Settings.WatchedFolders)
+            _watchedFolders.Add(watchedFolder);
 
         // Initialize codec list view
         ListViewCodecs.ItemsSource = CodecDiscovery.GetAllCodecs();
@@ -180,6 +188,43 @@ internal sealed partial class Settings
     {
         AppConfig.Settings.DecodeRawData = ButtonDecodeRawData.IsOn;
         await AppConfig.SaveAsync();
+    }
+
+    private void ListViewWatchedFolders_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        ButtonRemoveWatchedFolder.IsEnabled = ListViewWatchedFolders.SelectedItem is string;
+    }
+
+    private async void ButtonAddWatchedFolder_OnClick(object sender, RoutedEventArgs e)
+    {
+        var folderPicker = new FolderPicker();
+        var windowHandle = WinRT.Interop.WindowNative.GetWindowHandle(this);
+        WinRT.Interop.InitializeWithWindow.Initialize(folderPicker, windowHandle);
+        folderPicker.FileTypeFilter.Add("*");
+
+        var folder = await folderPicker.PickSingleFolderAsync();
+        if (folder == null)
+            return;
+
+        var normalizedPath = NormalizeFolderPath(folder.Path);
+        if (_watchedFolders.Any(path => string.Equals(path, normalizedPath, StringComparison.OrdinalIgnoreCase)))
+        {
+            await ShowMessageDialog("Folder already added", "That watched folder is already in the library list.");
+            return;
+        }
+
+        _watchedFolders.Add(normalizedPath);
+        await PersistWatchedFoldersAsync();
+    }
+
+    private async void ButtonRemoveWatchedFolder_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (ListViewWatchedFolders.SelectedItem is not string selectedFolder)
+            return;
+
+        _watchedFolders.Remove(selectedFolder);
+        ButtonRemoveWatchedFolder.IsEnabled = false;
+        await PersistWatchedFoldersAsync();
     }
 
     private async void ButtonEnableAutoHideMouse_OnToggled(object sender, RoutedEventArgs e)
@@ -604,6 +649,22 @@ internal sealed partial class Settings
             XamlRoot = Content.XamlRoot
         };
         await dialog.ShowAsync();
+    }
+
+    private async Task PersistWatchedFoldersAsync()
+    {
+        AppConfig.Settings.WatchedFolders.Clear();
+        foreach (var watchedFolder in _watchedFolders)
+            AppConfig.Settings.WatchedFolders.Add(watchedFolder);
+
+        await AppConfig.SaveAsync();
+        await LibraryIndexerService.Instance.RefreshWatchedFoldersAsync();
+    }
+
+    private static string NormalizeFolderPath(string folderPath)
+    {
+        return Path.GetFullPath(folderPath)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
     }
 
     void StartHeartBeat()

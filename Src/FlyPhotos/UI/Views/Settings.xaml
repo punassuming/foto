@@ -148,6 +148,42 @@
                         <!--  *****************  -->
 
                         <TextBlock
+                            x:Uid="TextBlockLibrary"
+                            Margin="0,20,0,0"
+                            Style="{StaticResource BodyStrongTextBlockStyle}" />
+
+                        <controls:SettingsExpander
+                            x:Name="SettingsCardWatchedFolders"
+                            x:Uid="SettingsCardWatchedFolders"
+                            Margin="0,5,0,0"
+                            HeaderIcon="{ui:FontIcon Glyph=&#xE8B7;}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button
+                                    x:Name="ButtonAddWatchedFolder"
+                                    x:Uid="ButtonAddWatchedFolder"
+                                    Click="ButtonAddWatchedFolder_OnClick" />
+                                <Button
+                                    x:Name="ButtonRemoveWatchedFolder"
+                                    x:Uid="ButtonRemoveWatchedFolder"
+                                    Click="ButtonRemoveWatchedFolder_OnClick"
+                                    IsEnabled="False" />
+                            </StackPanel>
+                            <controls:SettingsExpander.Items>
+                                <controls:SettingsCard
+                                    x:Name="SettingsCardWatchedFoldersList"
+                                    x:Uid="SettingsCardWatchedFoldersList">
+                                    <ListView
+                                        x:Name="ListViewWatchedFolders"
+                                        MaxHeight="180"
+                                        ItemsSource="{x:Bind WatchedFolders, Mode=OneWay}"
+                                        SelectionChanged="ListViewWatchedFolders_OnSelectionChanged" />
+                                </controls:SettingsCard>
+                            </controls:SettingsExpander.Items>
+                        </controls:SettingsExpander>
+
+                        <!--  *****************  -->
+
+                        <TextBlock
                             x:Uid="TextBlockPhotoDisplay"
                             Margin="0,20,0,0"
                             Style="{StaticResource BodyStrongTextBlockStyle}" />

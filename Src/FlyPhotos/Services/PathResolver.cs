@@ -42,6 +42,11 @@ internal static class PathResolver
         return dbFolderPath;
     }
 
+    public static string GetLibraryDbPath()
+    {
+        return Path.Combine(GetDbFolderPath(), "FlyPhotosLibrary.db");
+    }
+
     public static string GetLogFolderPath()
     {
         var logFolder = IsPackagedApp ?

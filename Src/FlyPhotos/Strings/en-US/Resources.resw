@@ -162,6 +162,15 @@
   <data name="ButtonOpenLog.Content" xml:space="preserve">
     <value>Open Log</value>
   </data>
+  <data name="ButtonOpenSettings.Content" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="ButtonAddWatchedFolder.Content" xml:space="preserve">
+    <value>Add folder</value>
+  </data>
+  <data name="ButtonRemoveWatchedFolder.Content" xml:space="preserve">
+    <value>Remove selected</value>
+  </data>
   <data name="ButtonPrevPageToolTip.Content" xml:space="preserve">
     <value>Previous Page</value>
   </data>
@@ -303,6 +312,18 @@ Settings &gt; Apps &gt; Default apps.</value>
   <data name="OpenFileHyperlink.Text" xml:space="preserve">
     <value>Open file</value>
   </data>
+  <data name="LibraryIndexedCountLabel.Text" xml:space="preserve">
+    <value>Indexed photos:</value>
+  </data>
+  <data name="LibrarySectionTitle.Text" xml:space="preserve">
+    <value>Library</value>
+  </data>
+  <data name="LibraryStatusLabel.Text" xml:space="preserve">
+    <value>Status:</value>
+  </data>
+  <data name="LibraryWatchedFoldersLabel.Text" xml:space="preserve">
+    <value>Watched folders</value>
+  </data>
   <data name="RightClickInstruction.Text" xml:space="preserve">
     <value>To use FlyPhotos, right-click a photo and select Open with &gt; FlyPhotos.</value>
   </data>
@@ -311,6 +332,30 @@ Settings &gt; Apps &gt; Default apps.</value>
   </data>
   <data name="SearchBox.PlaceholderText" xml:space="preserve">
     <value>Search apps…</value>
+  </data>
+  <data name="SearchTextBox.PlaceholderText" xml:space="preserve">
+    <value>Search filename, folder, title, or caption</value>
+  </data>
+  <data name="SearchDateTextBox.PlaceholderText" xml:space="preserve">
+    <value>Date (YYYY-MM-DD)</value>
+  </data>
+  <data name="SearchRatingAnyItem.Content" xml:space="preserve">
+    <value>Any rating</value>
+  </data>
+  <data name="SearchRatingOneItem.Content" xml:space="preserve">
+    <value>1+ star</value>
+  </data>
+  <data name="SearchRatingTwoItem.Content" xml:space="preserve">
+    <value>2+ stars</value>
+  </data>
+  <data name="SearchRatingThreeItem.Content" xml:space="preserve">
+    <value>3+ stars</value>
+  </data>
+  <data name="SearchRatingFourItem.Content" xml:space="preserve">
+    <value>4+ stars</value>
+  </data>
+  <data name="SearchRatingFiveItem.Content" xml:space="preserve">
+    <value>5 stars</value>
   </data>
   <data name="SettingsCardAllowMultiInstance.Description" xml:space="preserve">
     <value>Extra instances only show the selected image (no navigation, delete, or settings).</value>
@@ -541,6 +586,18 @@ Esc : Close Settings or Exit App</value>
   <data name="SettingsCardStretchSmallImages.Header" xml:space="preserve">
     <value>Zoom small photos to fit display area</value>
   </data>
+  <data name="SettingsCardWatchedFolders.Header" xml:space="preserve">
+    <value>Watched folders</value>
+  </data>
+  <data name="SettingsCardWatchedFolders.Description" xml:space="preserve">
+    <value>Choose the folders that should be indexed into the library catalog.</value>
+  </data>
+  <data name="SettingsCardWatchedFoldersList.Header" xml:space="preserve">
+    <value>Current library folders</value>
+  </data>
+  <data name="SettingsCardWatchedFoldersList.Description" xml:space="preserve">
+    <value>These folders are scanned in the background and persisted across restarts.</value>
+  </data>
   <data name="SettingsCardTheme.Description" xml:space="preserve">
     <value>Select the app theme.</value>
   </data>
@@ -639,6 +696,9 @@ Esc : Close Settings or Exit App</value>
   </data>
   <data name="TextBlockKeyboardAndMouse.Text" xml:space="preserve">
     <value>Keyboard and Mouse</value>
+  </data>
+  <data name="TextBlockLibrary.Text" xml:space="preserve">
+    <value>Library</value>
   </data>
   <data name="TextBlockPhotoDisplay.Text" xml:space="preserve">
     <value>Photo Display</value>
