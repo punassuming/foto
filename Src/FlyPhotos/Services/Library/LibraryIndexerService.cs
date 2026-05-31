@@ -164,6 +164,7 @@ internal sealed class LibraryIndexerService
         }
         catch (SemaphoreFullException)
         {
+            // Duplicate refresh requests are intentionally coalesced into a single pending scan.
         }
     }
 

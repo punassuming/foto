@@ -23,7 +23,9 @@ internal sealed class LibraryCatalogService
     private LibraryCatalogService()
     {
         _dbPath = PathResolver.GetLibraryDbPath();
-        Directory.CreateDirectory(Path.GetDirectoryName(_dbPath)!);
+        var dbDirectory = Path.GetDirectoryName(_dbPath);
+        if (!string.IsNullOrWhiteSpace(dbDirectory))
+            Directory.CreateDirectory(dbDirectory);
 
         var builder = new SqliteConnectionStringBuilder
         {

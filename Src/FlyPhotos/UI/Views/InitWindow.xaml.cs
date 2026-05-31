@@ -21,11 +21,13 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.System;
+using NLog;
 
 namespace FlyPhotos.UI.Views;
 
 public sealed partial class InitWindow
 {
+    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
     private readonly ObservableCollection<LibrarySearchResult> _searchResults = [];
     private Settings? _settingsWindow;
     private int _searchVersion;
@@ -264,8 +266,9 @@ public sealed partial class InitWindow
         {
             await RefreshLibraryDashboardAsync();
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.Warn(ex, "Failed to refresh library dashboard in InitWindow.");
         }
     }
 
@@ -276,8 +279,9 @@ public sealed partial class InitWindow
             await RefreshLibraryDashboardAsync();
             await RunSearchAsync();
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.Warn(ex, "Failed to refresh library UI in InitWindow.");
         }
     }
 }
