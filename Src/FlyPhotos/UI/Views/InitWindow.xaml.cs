@@ -105,7 +105,7 @@ public sealed partial class InitWindow
 
     private void LibraryIndexerService_OnStatusChanged(object? sender, EventArgs e)
     {
-        DispatcherQueue.TryEnqueue(() => _ = RefreshLibraryDashboardAsync());
+        DispatcherQueue.TryEnqueue(() => _ = RefreshLibraryDashboardSafeAsync());
     }
 
     private async Task RefreshLibraryDashboardAsync()
@@ -194,11 +194,7 @@ public sealed partial class InitWindow
             _settingsWindow.Closed -= SettingsWindow_Closed;
 
         _settingsWindow = null;
-        DispatcherQueue.TryEnqueue(() =>
-        {
-            _ = RefreshLibraryDashboardAsync();
-            _ = RunSearchAsync();
-        });
+        DispatcherQueue.TryEnqueue(() => _ = RefreshLibraryUiSafeAsync());
     }
 
 
@@ -260,5 +256,28 @@ public sealed partial class InitWindow
         return int.TryParse(tag, NumberStyles.Integer, CultureInfo.InvariantCulture, out var rating)
             ? rating
             : null;
+    }
+
+    private async Task RefreshLibraryDashboardSafeAsync()
+    {
+        try
+        {
+            await RefreshLibraryDashboardAsync();
+        }
+        catch
+        {
+        }
+    }
+
+    private async Task RefreshLibraryUiSafeAsync()
+    {
+        try
+        {
+            await RefreshLibraryDashboardAsync();
+            await RunSearchAsync();
+        }
+        catch
+        {
+        }
     }
 }

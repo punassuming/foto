@@ -277,6 +277,7 @@ internal sealed class LibraryCatalogService
 
             if (existingByToken.TryGetValue(asset.ChangeToken, out var queue))
             {
+                var reusedExistingAsset = false;
                 while (queue.Count > 0)
                 {
                     var candidate = queue.Dequeue();
@@ -285,13 +286,15 @@ internal sealed class LibraryCatalogService
 
                     handledAssetIds.Add(candidate.AssetId);
                     await UpsertAssetAsync(connection, transaction, candidate.AssetId, asset);
-                    goto NextAsset;
+                    reusedExistingAsset = true;
+                    break;
                 }
+
+                if (reusedExistingAsset)
+                    continue;
             }
 
             await UpsertAssetAsync(connection, transaction, null, asset);
-        NextAsset:
-            ;
         }
 
         foreach (var asset in existingAssets)
